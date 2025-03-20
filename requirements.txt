@@ -1,2 +1,2 @@
-opencv-python
-deepface
+pip install -r requirements.txt
+
