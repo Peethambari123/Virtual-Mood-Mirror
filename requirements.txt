@@ -1,0 +1,2 @@
+pip install opencv-python deepface
+python virtual_mood_mirror.py
