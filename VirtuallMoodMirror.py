@@ -1,44 +1,42 @@
-import cv2
+import streamlit as st
 from deepface import DeepFace
+import cv2
+import numpy as np
 import random
-import time
 
-# Mapping emotions to memes or text reactions
+# Set page config
+st.set_page_config(page_title="Virtual Mood Mirror", layout="centered")
+
+# Emotion reactions
 reactions = {
-    "happy": ["😃 You look so happy! Here's a dancing cat GIF!", "😄 Keep smiling!"] ,
+    "happy": ["😃 You look so happy! Here's a dancing cat GIF!", "😄 Keep smiling!"],
     "sad": ["😢 Why are you crying?", "🥺 Want a virtual hug? 🤗"],
     "angry": ["😡 Chill bro!", "🔥 Take a deep breath!"],
     "neutral": ["😐 Bruh...", "🫤 Feeling meh?"]
 }
 
-# Start video capture
-cap = cv2.VideoCapture(0)  # Works on PC/Laptop
+st.title("🪞 Virtual Mood Mirror")
+st.write("Let me guess your mood... Take a selfie!")
 
-while True:
-    ret, frame = cap.read()
-    if not ret:
-        break
-    
-    # Show live feed
-    cv2.imshow("Virtual Mood Mirror", frame)
-    
-    # Analyze mood every 5 seconds
-    if int(time.time()) % 5 == 0:
-        try:
-            result = DeepFace.analyze(frame, actions=['emotion'], enforce_detection=False)
-            emotion = result[0]['dominant_emotion']
-            print(f"Detected Emotion: {emotion}")
-            
-            # Get reaction
-            for key in reactions.keys():
-                if key in emotion:
-                    print(random.choice(reactions[key]))
-        except:
-            print("Face not detected!")
-    
-    # Press 'q' to quit
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+# Capture image from webcam
+img_file_buffer = st.camera_input("Take a photo")
 
-cap.release()
-cv2.destroyAllWindows()
+if img_file_buffer is not None:
+    # Convert image to numpy array
+    file_bytes = np.asarray(bytearray(img_file_buffer.read()), dtype=np.uint8)
+    frame = cv2.imdecode(file_bytes, 1)
+
+    # Show the image
+    st.image(frame, channels="BGR", caption="Your photo")
+
+    try:
+        result = DeepFace.analyze(frame, actions=['emotion'], enforce_detection=False)
+        emotion = result[0]['dominant_emotion']
+        st.subheader(f"🧠 Detected Emotion: `{emotion}`")
+
+        for key in reactions:
+            if key in emotion.lower():
+                st.success(random.choice(reactions[key]))
+    except Exception as e:
+        st.error("🙁 Face not detected properly. Try again!")
+
